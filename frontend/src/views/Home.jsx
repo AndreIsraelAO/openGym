@@ -42,6 +42,16 @@ export default function Home() {
   const plannedPerWeek = Object.keys(S.week).filter(k => S.week[k]).length
   const bwPoints = S.bodyweight.slice(-30).map(b => ({ t: b.t || new Date(b.d).getTime(), y: b.w, d: b.d }))
 
+  // next planned session after today (honours reschedules), shown once today is done or a rest day
+  const todayDone = doneDays.has(todayISO())
+  let next = null
+  if (!S.active && (todayDone || !routine)) {
+    for (let i = 1; i <= 7 && !next; i++) {
+      const d = new Date(today); d.setDate(today.getDate() + i)
+      next = effectiveRoutine(S, isoOf(d))
+    }
+  }
+
   // today's session shown right under the week strip
   const onToday = () => { if (S.active) nav('/workout'); else if (routine) startFlow(routine.id); else dayOverrideSheet(todayISO()) }
 
@@ -72,6 +82,16 @@ export default function Home() {
           : routine ? <span className="tag acc">{t('Start')}</span>
           : <Icon name="plus" className="chev" />}
       </div>
+      {next && <div className="today-row" onClick={() => startFlow(next.id)}>
+        <div className="row" style={{ gap: 9, minWidth: 0 }}>
+          <span className="lrow-i" style={{ background: 'var(--surface-3)' }}><Icon name={glyphOf(next.emoji)} /></span>
+          <div style={{ minWidth: 0 }}>
+            <div className="lbl2">{t('Up next')}</div>
+            <div className="ttl">{next.name}</div>
+          </div>
+        </div>
+        <span className="tag acc">{t('Start')}</span>
+      </div>}
     </div>
 
     {!S.routines.length && !S.active && (

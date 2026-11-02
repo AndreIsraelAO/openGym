@@ -7,6 +7,8 @@ import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { glyphOf, DEFAULT_GLYPH } from '../lib/glyphs.js'
 
+const WEEK = [1, 2, 3, 4, 5, 6, 0]
+
 export default function Plan() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
@@ -18,6 +20,12 @@ export default function Plan() {
     nav('/plan/r/' + r.id)
   }
 
+  // Swap the routine assigned to a weekday with its neighbour in the Mon–Sun list.
+  const moveDay = (i, dir) => update(s => {
+    const a = WEEK[i], b = WEEK[i + dir]
+    ;[s.week[a], s.week[b]] = [s.week[b], s.week[a]]
+  })
+
   return <>
     <div className="hdr">
       <div><h1>{t('Plan')}</h1><div className="sub">{t('Your weekly routine')}</div></div>
@@ -26,11 +34,13 @@ export default function Plan() {
     <div className="cols"><div>
       <h4 className="sec">{t('Week schedule')}</h4>
       <div className="list" style={{ display: 'flex', flexDirection: 'column' }}>
-        {[1, 2, 3, 4, 5, 6, 0].map(d => {
+        {WEEK.map((d, i) => {
           const r = S.routines.find(x => x.id === S.week[d])
           return <div key={d} className="item" onClick={() => dayAssignSheet(d)}>
             <div className="grow"><div className="tt">{t(DAYN[d])}</div></div>
             {r ? <span className="tag acc"><Icon name={glyphOf(r.emoji)} />{r.name}</span> : <span className="tag">{t('Rest')}</span>}
+            <button className="iconbtn" style={{ width: 30, height: 30 }} disabled={i === 0} aria-label={t('Move up')} onClick={e => { e.stopPropagation(); moveDay(i, -1) }}><Icon name="chevronUp" /></button>
+            <button className="iconbtn" style={{ width: 30, height: 30 }} disabled={i === WEEK.length - 1} aria-label={t('Move down')} onClick={e => { e.stopPropagation(); moveDay(i, 1) }}><Icon name="chevronDown" /></button>
             <Icon name="chevronRight" className="chev" /></div>
         })}
       </div>
